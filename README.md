@@ -22,7 +22,7 @@ Følgende filer inngår:
 
 I tillegg inneholder repositoriet to separate skript for topic modelling (LDA) av fritekstsvar.
 
-## Kjøre sanity checks
+## Kjøre konsistenskontroller ("sanity checks" på engelsk)
 
 Grunnleggende metrikksjekker:
 `python run/sanity_checks_model_metrics.py`
