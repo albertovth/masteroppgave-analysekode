@@ -1,0 +1,58 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environments / local config
+.venv/
+venv/
+env/
+.env
+.env.*
+*.local
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+**/logs/
+last_run*
+runlog*
+master_sanity_run*
+
+# Data
+*.csv
+*.tsv
+*.xlsx
+*.xls
+*.sav
+*.dta
+*.parquet
+*.feather
+*.jsonl
+data/
+realdata/
+restricted_data/
+synthetic_data/
+outputs/
+results/
+export/
+tmp/
+cache/
+
+# Generated figures / documents
+*.png
+*.jpg
+*.jpeg
+*.pdf
+*.svg
+*.docx
+*.pptx
+
+# Jupyter
+.ipynb_checkpoints/
