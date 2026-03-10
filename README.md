@@ -1,6 +1,6 @@
 # Python-kode for masterprosjekt i offentlig forvaltning
 
-Dette repositoriet inneholder sentral analysekode brukt i et masterprosjekt om OCAI-profiler og KI-strategiprofiler, med Dirichlet-modellering, ILR/CLR-transformasjoner og tilhørende sanity checks.
+Dette repositoriet inneholder sentral analysekode brukt i et masterprosjekt om OCAI-profiler og KI-strategiprofiler, med Dirichlet-modellering, ILR/CLR-transformasjoner og tilhørende konsistenskontroller "sanity checks".
 
 ## Struktur
 
