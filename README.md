@@ -17,6 +17,10 @@ Følgende filer inngår:
 - `sanity_checks_dirichlet.py`
 - `sanity_checks_model_metrics.py`
 - `run_real.sh`
+- `lda_fritekst.py`
+- `lda_dio_bruksomrader_ki.py`
+
+I tillegg inneholder repositoriet to separate skript for topic modelling (LDA) av fritekstsvar.
 
 ## Kjøre sanity checks
 
