@@ -1,6 +1,6 @@
-# Python-kode for masterprosjekt i offentlig forvaltning
+# Python-kode for masteroppgave i offentlig forvaltning
 
-Dette repoet inneholder sentral analysekode brukt i et masterprosjekt om OCAI-profiler og KI-strategiprofiler, med regresjonsanalyser, Dirichlet-modellering, ILR/CLR-transformasjoner og tilhørende konsistenskontroller.
+Dette repoet inneholder sentral analysekode brukt i en masteroppgave om OCAI-profiler og strategiprofiler for KI, med regresjonsanalyser, Dirichlet-modellering, ILR/CLR-transformasjoner og tilhørende konsistenskontroller.
 
 ## Struktur
 
@@ -38,12 +38,12 @@ Se `docs/STRUKTUR_TIL_DATAFIL.md` for strukturen datafilen må ha for at analyse
 
 Den fullstendige empiriske analysen bygger på data som ikke kan deles offentlig.
 
-Dette repositoriet inneholder derfor ikke:
+Dette repoet inneholder derfor ikke:
 - begrensede/reelle datafiler
-- private logger
-- genererte outputfiler fra kjøringer på reelle data
+- private loggfiler
+- genererte resultatfiler fra kjøringer på reelle data
 - personlige arbeidsnotater
 
 ## Formål
 
-Formålet med repositoriet er å dokumentere analyseopplegget og gjøre sentral kode tilgjengelig for innsyn og etterprøvbarhet.
+Formålet med repoet er å dokumentere analyseopplegget og gjøre sentral kode tilgjengelig for innsyn og etterprøvbarhet.
