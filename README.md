@@ -1,10 +1,10 @@
 # Python-kode for masterprosjekt i offentlig forvaltning
 
-Dette repositoriet inneholder sentral analysekode brukt i et masterprosjekt om OCAI-profiler og KI-strategiprofiler, med Dirichlet-modellering, ILR/CLR-transformasjoner og tilhørende konsistenskontroller.
+Dette repoet inneholder sentral analysekode brukt i et masterprosjekt om OCAI-profiler og KI-strategiprofiler, med regresjonsanalyser, Dirichlet-modellering, ILR/CLR-transformasjoner og tilhørende konsistenskontroller.
 
 ## Struktur
 
-`run/` inneholder Python-koden for analyse, konsistenskontroller, oppstarttester og hjelpefunksjoner.
+`run/` inneholder Python-koden for analyse, regresjonsanalyser, konsistenskontroller, oppstarttester og hjelpefunksjoner.
 
 ## Innhold
 
