@@ -20,7 +20,7 @@ Følgende filer inngår:
 - `lda_fritekst.py`
 - `lda_dio_bruksomrader_ki.py`
 
-I tillegg inneholder repositoriet to separate skript for topic modelling (LDA) av fritekstsvar.
+I tillegg inneholder repoet to separate skript for temamodeller (LDA) av fritekstsvar.
 
 ## Kjøre konsistenskontroller
 
