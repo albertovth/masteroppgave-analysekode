@@ -24,7 +24,7 @@ I tillegg inneholder repoet to separate skript for temamodeller (LDA) av friteks
 
 ## Kjøre konsistenskontroller
 
-Grunnleggende metrikksjekker:
+Grunnleggende kontroller av modellmål:
 `python run/sanity_checks_model_metrics.py`
 
 Full oppstartstest:
