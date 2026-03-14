@@ -1184,7 +1184,7 @@ def run_all_steps():
                                              block: str, stage_label: str,
                                              expected_rows_per_id: int = 3) -> pd.DataFrame:
         """
-        Felles Aitchison-aggregator med sanity checks.
+        Felles Aitchison-aggregator med konsistenskontroller.
         - Krever expected_rows_per_id rader per ID før aggregering.
         - Bruker CLR-mean (log-geometri) med eps og closure.
         - Verifiserer én rad per ID og sum≈1 etterpå.
@@ -4986,7 +4986,7 @@ def run_all_steps():
     okO_12C = isinstance(models_O, dict) and len(models_O) > 0 and not Z_O.empty and not X_rev.empty
     
     if not (okS_12C or okO_12C):
-        print("[STEG 12C] Mangler nødvendige objekter (models_*, Z_*, X_*). Hopper over sanity checks.")
+        print("[STEG 12C] Mangler nødvendige objekter (models_*, Z_*, X_*). Hopper over konsistenskontroller.")
     else:
         # ---------- 12C.1: Algebraiske invariants for Ψ og CLR-mapping ----------
         PSI = _psi_pivot_isolate_first(first_idx=0)
@@ -5169,7 +5169,7 @@ def run_all_steps():
             if not BOOT_DF.empty:
                 export_excel(BOOT_DF, writer=w, sheet_name="bootstrap_SE_CLR", label="bootstrap_SE_CLR")
     
-        print(f"[STEG 12C] Skrev CLR-sanity checks til: {out_checks}")
+        print(f"[STEG 12C] Skrev CLR-konsistenskontroller til: {out_checks}")
         register_output(step="STEG 12C", label="clr_sanity", path=out_checks, kind="xlsx")
         if not INV_DF.empty:
             print("[STEG 12C] Algebraiske invariants – shape=", INV_DF.shape, "cols=", list(INV_DF.columns))

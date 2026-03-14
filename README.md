@@ -1,10 +1,10 @@
 # Python-kode for masterprosjekt i offentlig forvaltning
 
-Dette repositoriet inneholder sentral analysekode brukt i et masterprosjekt om OCAI-profiler og KI-strategiprofiler, med Dirichlet-modellering, ILR/CLR-transformasjoner og tilhørende konsistenskontroller "sanity checks".
+Dette repositoriet inneholder sentral analysekode brukt i et masterprosjekt om OCAI-profiler og KI-strategiprofiler, med Dirichlet-modellering, ILR/CLR-transformasjoner og tilhørende konsistenskontroller.
 
 ## Struktur
 
-`run/` inneholder Python-koden for analyse, sanity checks og hjelpefunksjoner.
+`run/` inneholder Python-koden for analyse, konsistenskontroller, oppstarttester og hjelpefunksjoner.
 
 ## Innhold
 
@@ -22,12 +22,17 @@ Følgende filer inngår:
 
 I tillegg inneholder repositoriet to separate skript for topic modelling (LDA) av fritekstsvar.
 
-## Kjøre konsistenskontroller ("sanity checks")
+## Kjøre konsistenskontroller
+
 Grunnleggende metrikksjekker:
 `python run/sanity_checks_model_metrics.py`
 
-Full røyktest:
+Full oppstartstest:
 `python run/smoke_test_pipeline.py`
+
+## Datastruktur
+
+Se `docs/STRUKTUR_TIL_DATAFIL.md` for strukturen datafilen må ha for at analysekoden skal fungere.
 
 ## Reproduserbarhet
 

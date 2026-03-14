@@ -109,7 +109,7 @@ def main():
     check_compute_pseudo_r2_properties()
     check_compute_r2_against_manual()
 
-    print("All sanity checks passed")
+    print("Alle konsistenskontroller bestått")
 
 
 if __name__ == "__main__":

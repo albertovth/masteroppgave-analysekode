@@ -63,4 +63,4 @@ if __name__ == "__main__":
     check_compute_bic_basic()
     check_compute_pseudo_r2_properties()
     check_compute_r2_against_manual()
-    print("All model_metrics sanity checks passed")
+    print("Alle konsistenskontroller for model_metrics bestått")
