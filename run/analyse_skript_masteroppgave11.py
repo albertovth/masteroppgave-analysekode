@@ -29,7 +29,7 @@ from model_metrics import compute_aic, compute_bic, compute_pseudo_r2
 
 _chi2 = chi2
 
-# --- Output manifest (module scope, metadata only) ---
+# --- Output (modul, metadata) ---
 _output_manifest = []
 
 def register_output(path, kind, df=None, note="", step="", label=""):
@@ -114,7 +114,7 @@ def run_all_steps():
     Z_O = pd.DataFrame()
     DIR_RES = pd.DataFrame()
 
-    # HC3 usage inventory (for run log)
+    # HC3 bruk (logg)
     _hc3_inventory = [
         "STEG 10 _fit_variant (OLS robust cov)",
         "STEG 10 coef tables",
