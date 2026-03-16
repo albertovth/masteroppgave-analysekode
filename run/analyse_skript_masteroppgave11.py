@@ -654,7 +654,7 @@ def run_all_steps():
     _robust_fallback_counter = {"count": 0}
 
     def _get_robust_cov_with_fallback(m, prefer="HC3", fallback="HC1"):
-        # k kan skilles fea len(X_cols) hvis tilpasset modell droppet/la til params (f.eks., kollineæritet/const behandling)
+        # k kan skilles fea len(X_cols) hvis tilpasset modell droppet/la til params (f.eks., kollineæritet/konst behandling)
         try:
             k = int(np.asarray(getattr(m, "params", [])).shape[0])
         except Exception:
