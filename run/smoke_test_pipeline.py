@@ -2,7 +2,7 @@
 Rask smoke-test av ILR/CLR, Dirichlet-MLE og en enkel ILR-regresjon.
 - Genererer syntetiske komposisjoner (4 deler) fra kjent Dirichlet.
 - Kjører MLE, ILR-transformasjon og en liten OLS-regresjon på ILR-koordinater.
-- Kaller sanity-sjekkene fra sanity_checks_ilr og sanity_checks_dirichlet.
+- Kaller konsistenskontrollene fra sanity_checks_ilr og sanity_checks_dirichlet.
 """
 
 from __future__ import annotations
