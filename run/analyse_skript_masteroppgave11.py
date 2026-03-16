@@ -650,11 +650,11 @@ def run_all_steps():
                 parts.append(f"dept={row.get(dept_col)}")
             parts.append(f"icc={_fmt_num(row.get('_icc'))}")
             print(f"[ICCROW] step={step_tag} label={label} " + " ".join(parts))
-    # --- Robust covariance helper (HC3 -> HC1 fallback) ---
+    # --- Robust kovarians hjelper (HC3 -> HC1 fallback) ---
     _robust_fallback_counter = {"count": 0}
 
     def _get_robust_cov_with_fallback(m, prefer="HC3", fallback="HC1"):
-        # k can differ from len(X_cols) if the fitted model dropped/added params (e.g., collinearity/const handling)
+        # k kan skilles fea len(X_cols) hvis tilpasset modell droppet/la til params (f.eks., kollineæritet/const behandling)
         try:
             k = int(np.asarray(getattr(m, "params", [])).shape[0])
         except Exception:
