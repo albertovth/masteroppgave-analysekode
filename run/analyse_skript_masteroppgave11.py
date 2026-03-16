@@ -804,7 +804,7 @@ def run_all_steps():
         DATA_FILE = data_file_env
 
     # ------------------------------------------
-    # Tee stdout/stderr to a run log (optional)
+    # Tee stdout/stderr to a run log (valgfritt)
     # ------------------------------------------
     if str(os.getenv("LOG_TEE", "1")).strip() != "0":
         try:
