@@ -804,7 +804,7 @@ def run_all_steps():
         DATA_FILE = data_file_env
 
     # ------------------------------------------
-    # Tee stdout/stderr to a run log (valgfritt)
+    # Dupliser stdout/stderr til en kjørelogg (valgfritt)
     # ------------------------------------------
     if str(os.getenv("LOG_TEE", "1")).strip() != "0":
         try:
@@ -864,7 +864,7 @@ def run_all_steps():
             print(f"[LOG] capturing console output to {log_path}")
             register_output(step="INIT", label="RUNLOG", path=str(log_path), kind="log", note="LOG_TEE")
         except Exception:
-            # Fail open: keep normal printing if log setup fails
+            # Ved feil: behold vanlig utskrift hvis oppsett av logg feiler
             pass
     
     xlsx_path = data_dir / DATA_FILE
@@ -911,7 +911,7 @@ def run_all_steps():
     
     def _cronbach_alpha(dfz: pd.DataFrame) -> float:
         """Cronbach's alpha på z-skalerte items; krever minst to kolonner og returnerer NaN om ikke beregnbar."""
-        # Standardize (z) so variances are 1
+        # Standardiser (z) slik at variansene er 1
         Z = (dfz - dfz.mean()) / dfz.std(ddof=1)
         k = Z.shape[1]
         if k < 2:
@@ -973,7 +973,7 @@ def run_all_steps():
         if q < 2:
             return None
     
-        # Fullt komplette rader for referanse (mean/cov)
+        # Fullt komplette rader for referanse (gjennomsnitt/kovarians)
         cc = df_num.dropna()
         if cc.shape[0] < 5:
             return None
@@ -1051,7 +1051,7 @@ def run_all_steps():
             print(f"Fant ikke kolonner i 'Kontroll': {missing_cols}")
         else:
             sub = kontroll[likert_cols].apply(pd.to_numeric, errors="coerce")
-            # listwise for reliabilitetsmål
+            # listevis sletting for reliabilitetsmål
             sub_listwise = sub.dropna()
             N_used = sub_listwise.shape[0]
             print(f"Ark: Kontroll  |  Variabler: {likert_cols}  |  N brukt (listwise): {N_used}")
@@ -1141,7 +1141,7 @@ def run_all_steps():
     
         df = pd.read_excel(xlsx_path, sheet_name=sh)
     
-        # eksakt match eller case-insensitive fallback
+        # eksakt treff eller treff uten skille mellom store og små bokstaver
         if set(cols).issubset(df.columns):
             use_cols = cols
         else:
@@ -1253,7 +1253,7 @@ def run_all_steps():
             if not aitchison_validate_announced:
                 print("[STEG2] AITCHISON_VALIDATE=ON (env var)")
                 aitchison_validate_announced = True
-            # Validering: Aitchison-agg (CLR-mean) vs. geometrisk mean per komponent + closure
+            # Validering: Aitchison-aggregat (CLR-gjennomsnitt) mot geometrisk gjennomsnitt per komponent + lukking
             logX_df = pd.DataFrame(logX, columns=cols)
             logX_df.insert(0, "ID", df["ID"].to_numpy())
             log_mean = logX_df.groupby("ID")[cols].mean()
@@ -1282,7 +1282,7 @@ def run_all_steps():
     # STEG 2 (NY): P-MATRISER + BAKGRUNN fra eget ark ("Bakgrunn")
     # =======================
     # - Leser ett felles bakgrunnsark ("Bakgrunn" / "Background" prefiks, case-insensitivt)
-    # - Slår bakgrunn inn i hver måltabell via ID (left merge)
+    # - Slår bakgrunn inn i hver måltabell via ID (venstresammenslåing)
     # - Skalerer profiler til p (0..1)
     # - Lager:
     #     p_tables[arknavn] = DataFrame(profiler i 0..1)
@@ -1324,7 +1324,7 @@ def run_all_steps():
                     bg[c] = bg[c].astype("string")
         return bg
     
-    # --- bygg p-tabeller + merge bakgrunn ---
+    # --- bygg p-tabeller + slå sammen bakgrunn ---
     p_tables: dict[str, pd.DataFrame] = {}
     with_bg_tables: dict[str, dict[str, pd.DataFrame]] = {}
     p_tables_id: dict[str, pd.DataFrame] = {}
@@ -1390,7 +1390,7 @@ def run_all_steps():
     
         # bygg original (0..100) + p med bakgrunn fra eget ark (via ID)
         if "ID" in df.columns and not BG.empty:
-            # normaliser ID til streng på begge før merge
+            # normaliser ID til streng i begge før sammenslåing
             df_ID = df[["ID"]].copy()
             df_ID["ID"] = df_ID["ID"].astype(str)
     
@@ -1408,7 +1408,7 @@ def run_all_steps():
                                  df[use_cols].reset_index(drop=True)], axis=1)
             # ID-nivå håndteres etter blokk-agg (ikke her)
         else:
-            # fallback: ingen ID eller ingen BG -> fortsatt uten bakgrunn (som før)
+            # hvis ingen ID eller BG -> fortsatt uten bakgrunn (som før)
             if "ID" not in df.columns:
                 print(f"[STEG 2] Advarsel: '{sh}' mangler 'ID' – kan ikke matche mot 'Bakgrunn'.")
             elif BG.empty:
@@ -1474,7 +1474,7 @@ def run_all_steps():
     # Lagrer alle p+bakgrunn-tabeller fra forrige steg til én Excel-fil (ett ark per skjema) med CSV-fallback.
     # Input er with_bg_tables/pbg_path, output er en lagret _p+bg.xlsx-fil eller CSV-er.
     # =======================
-    # STEG 3: LAGRING p+bg (med fallback)
+    # STEG 3: LAGRING p+bg (ved feil: alternativ løsning)
     # =======================
     # - Skriver hvert ark i with_bg_tables som et eget Excel-ark "<originalt arknavn> (p)"
     # - Faller tilbake til openpyxl hvis xlsxwriter feiler
@@ -1562,13 +1562,13 @@ def run_all_steps():
                     _log_df_meta("  meta:", d["p"])
                     _log_small_cats("  cats:", d["p"])
     
-    # Samler alle OCAI- og Strategi-profiler på tvers av ark, beregner Mean/Std og skriver en oppsummeringsfil.
+    # Samler alle OCAI- og Strategi-profiler på tvers av ark, beregner gjennomsnitt/standardavvik og skriver en oppsummeringsfil.
     # Input er p_tables fra steg 2, output er <dataset>_summary_overall.xlsx + konsollvisning.
     # =======================
-    # STEG 4: SAMLET OCAI/STRATEGI (MERGET) – Mean og Std
+    # STEG 4: SAMLET OCAI/STRATEGI (SAMMENSLÅTT) – gjennomsnitt og standardavvik
     # =======================
     # - Slår sammen alle p-tabeller per blokk (OCAI / Strategi)
-    # - Beregner Mean og Std (ddof=1) for hver profil
+    # - Beregner gjennomsnitt og standardavvik (ddof=1) for hver profil
     # - Skriver til <eksempeldatasett>_summary_overall.xlsx
     # - Skriver kort konsoll-rapport
     
@@ -1636,7 +1636,7 @@ def run_all_steps():
     # =======================
     # - Leser p+bg-filen fra STEG 3 (ark som ender med " (p)")
     # - Regner ICC(1) per profil innenfor hver blokk (OCAI/Strategi) gruppert på 'Departement'
-    # - Skriver tabell til <eksempeldatasett>_icc.xlsx (fallback til CSV)
+    # - Skriver tabell til <eksempeldatasett>_icc.xlsx (ved feil: CSV)
     
     def _pick_icc_sheet(xls_local: pd.ExcelFile, block: str):
         block_key = block.lower()
@@ -1808,7 +1808,7 @@ def run_all_steps():
     print("\n--- ICC(1) per Departement ---")
     _log_df_meta("ICC(1) per Departement (meta)", ICC_SUMMARY)
     
-    # Lagre til fil (Excel med fallback til CSV)
+    # Lagre til fil (Excel, ved feil CSV)
     out_icc = base_path.with_name(base_path.stem + "_icc_ID.xlsx")
     try:
         with pd.ExcelWriter(out_icc, engine="xlsxwriter") as writer:
@@ -1835,15 +1835,15 @@ def run_all_steps():
 
     _log_icc_summary(ICC_SUMMARY, "STEG5", "ICC_SUMMARY", cap=2000)
     
-    # Slår sammen p+bg-ark og lager Mean/Std per profil innen hver bakgrunnsvariabel (departement, ansiennitet osv.).
+    # Slår sammen p+bg-ark og lager gjennomsnitt/standardavvik per profil innen hver bakgrunnsvariabel (departement, ansiennitet osv.).
     # Input er pbg_path/ocai_cols/strat_cols; output er en Excel med sammendrag per bakgrunn + konsollutdrag.
     # =======================
-    # STEG 6: Sammendrag per bakgrunnsvariabel (Mean/Std) for OCAI og Strategi
+    # STEG 6: Sammendrag per bakgrunnsvariabel (gjennomsnitt/standardavvik) for OCAI og Strategi
     # =======================
     # - Leser p+bg-filen (fra STEG 3)
     # - Slår sammen alle relevante ark per blokk (bare faktiske bakgrunnskolonner beholdes)
-    # - Lager tabeller (per bakgrunnsvariabel) med Mean/Std for hver profil
-    # - Skriver til <eksempeldatasett>_by_category_summary.xlsx (fallback håndteres i except)
+    # - Lager tabeller (per bakgrunnsvariabel) med gjennomsnitt/standardavvik for hver profil
+    # - Skriver til <eksempeldatasett>_by_category_summary.xlsx (ved feil håndteres i unntak)
     
     def _load_merged_block_from_pbg(block: str, ocai_cols: list[str], strat_cols: list[str]) -> pd.DataFrame:
         """Laster og slår sammen alle (p)-ark for blokk, beholder faktiske bakgrunnskolonner og skalerer profiler ved behov."""
@@ -1900,7 +1900,7 @@ def run_all_steps():
             mean = g.mean()
             std = g.std(ddof=1)
     
-            # lang-format med Mean og Std side om side
+            # langt format med gjennomsnitt og standardavvik side om side
             mean_long = mean.stack().to_frame("Mean")
             std_long = std.stack().to_frame("Std")
             out = mean_long.join(std_long).reset_index()
@@ -1918,7 +1918,7 @@ def run_all_steps():
         prefix = "ocai" if block == "OCAI" else "strategi"
         id_sheets = [n for n in xls.sheet_names if n.endswith(" (p_ID)") and n.lower().startswith(prefix)]
         if not id_sheets:
-            # Fallback: håndter avkortede ark-navn som mister "(p_ID)"-suffixet.
+            # Håndter avkortede ark-navn som mister suffikset "(p_ID)".
             id_sheets = [n for n in xls.sheet_names if n.lower().startswith(prefix)]
         for sh in id_sheets:
             df = pd.read_excel(pbg_path_id, sheet_name=sh)
@@ -2060,7 +2060,7 @@ def run_all_steps():
             _log_df_meta("[STEG 6] STRAT_ALL (meta)", strat_all)
     
     except Exception:
-        # Fallback til openpyxl, deretter til CSV
+        # Prøv openpyxl, deretter CSV
         try:
             ocai_sheet_list = (["OCAI_ALL_ID"] + [("OCAI_" + bg + "_ID")[:31] for bg in ocai_tables.keys()]) if ocai_tables else []
             strat_sheet_list = (["STRAT_ALL_ID"] + [("STRAT_" + bg + "_ID")[:31] for bg in strat_tables.keys()]) if strat_tables else []
@@ -2129,9 +2129,9 @@ def run_all_steps():
     # =======================
     # STEG 6B: Master-deskriptiver (OCAI/Strategi Aitchison, Likert, Bakgrunn)
     # =======================
-    # - Bruker ID-intersection per blokk (OCAI/Strategi) på tvers av 3 ark
+    # - Bruker felles ID per blokk (OCAI/Strategi) på tvers av 3 ark
     # - Aitchison-agg per ID via eksisterende _aggregate_profiles_aitchison_per_id
-    # - Center (geom. mean + closure) og SD i CLR-rom
+    # - Senter (geometrisk gjennomsnitt + lukking) og standardavvik i CLR-rom
     # - Likert og bakgrunn: rå deskriptiver
 
     def _id_intersection_for_block(block: str, sheets: list[str], p_tables: dict) -> tuple[set[str], list[str]]:
@@ -2215,7 +2215,7 @@ def run_all_steps():
                 })
         return pd.DataFrame(rows)
 
-    # OCAI / Strategi: ID-intersection + Aitchison
+    # OCAI / Strategi: felles ID-er + Aitchison
     ocai_ids, ocai_sheets = _id_intersection_for_block("OCAI", _block_sheets.get("OCAI", []), p_tables)
     _strat_key = next((k for k in ["Strategi","STRATEGI","STRAT","Strategy","STRATEGY"] if k in _block_sheets), None)
     strat_ids, strat_sheets = _id_intersection_for_block("Strategi", _block_sheets.get(_strat_key, []) if _strat_key else [], p_tables)
@@ -2270,7 +2270,7 @@ def run_all_steps():
     bg_cols = ["Departement", "Ansiennitet", "Alder", "Kjønn", "Stilling"]
     desc_bg = _categorical_desc(bg_df, bg_cols)
 
-    # Meta: ID intersection
+    # Meta: felles ID-er
     desc_meta = pd.DataFrame([
         {"Blokk": "OCAI", "Sheets_used": ", ".join(ocai_sheets), "N_IDs_intersection": int(len(ocai_all_id_df)) if not ocai_all_id_df.empty else int(len(ocai_ids))},
         {"Blokk": "Strategi", "Sheets_used": ", ".join(strat_sheets), "N_IDs_intersection": int(len(strat_all_id_df)) if not strat_all_id_df.empty else int(len(strat_ids))},
@@ -2291,12 +2291,12 @@ def run_all_steps():
     register_output(step="STEG 6B", label="descriptives_master", path=out_desc, kind="xlsx")
 
     # Rydder p-matriser, estimerer Dirichlet-alpha per ark/blokk (Minka) og tester mot symmetrisk referanse.
-    # Tar inn p_tables/ocai_cols/strat_cols og skriver alpha- og fit-tabeller til <dataset>_dirichlet_alpha.xlsx.
+    # Tar inn p_tables/ocai_cols/strat_cols og skriver alpha- og tilpasningstabeller til <dataset>_dirichlet_alpha.xlsx.
     # =======================
     # STEG 7: Dirichlet-MLE (Minka) med PyPI-pakken `dirichlet`
     # =======================
     # - Rens rader (0..1, sum≈1, ingen 0) for hvert ark og blokk (OCAI/Strategi)
-    # - Estimer alpha med Minka (fixedpoint → meanprecision fallback)
+    # - Estimer alpha med Minka (fixedpoint → meanprecision ved behov)
     # - Sammenlign mot symmetrisk referanse (MLE for ett felles a) m/ LR-test
     # - Regn pseudo-R², R2_LR, AIC/BIC/AICc
     # - Lagre alpha og fit-statistikk til <eksempeldatasett>_dirichlet_alpha.xlsx
@@ -2474,7 +2474,7 @@ def run_all_steps():
         return rows_df, fit_df
     
     
-    # --- Estimer per ark (fra p_tables) + MERGED (Aitchison per ID) ---
+    # --- Estimer per ark (fra p_tables) + MERGET (Aitchison per ID) ---
     _rows, _fits = [], []
 
     def _ordered_sheet_names(prefixes: list[str], available: list[str]) -> list[str]:
@@ -2641,7 +2641,7 @@ def run_all_steps():
     # Plotter tetraeder med faktiske p-rader (og eventuelt simulert Dirichlet-sky) for hvert ark og blokk.
     # Input er p_tables og DIR_RES fra steg 7; output er PNG-filer i _dirichlet_plots og ev. plt.show.
     # =======================
-    # STEG 8: Visualisering (kun EMPIRISKE data) + Dirichlet-sky
+    # STEG 8: Visualisering (kun empiriske data) + Dirichlet-sky
     # =======================
     # Forutsetter i minnet: xlsx_path, p_tables, DIR_RES (fra STEG 7), ocai_cols, strat_cols
     
@@ -2842,7 +2842,7 @@ def run_all_steps():
         for c in candidates:
             if c in cols:
                 return c
-        # fuzzy fallback
+        # omtrentlig treff som nødløsning
         for c in cols:
             if re.search(r"leder|rolle|stilling", str(c), flags=re.I):
                 return c
@@ -3167,7 +3167,7 @@ def run_all_steps():
 
     
     # Kobler ILR-transformerte OCAI/Strategi-profiler med kontroller via ID, kjører robuste OLS (HC3) begge veier og lager predikert andelsmatrise.
-    # Input er profilark + Kontrol med ID, output er koeffisienttabeller/designmatriser og fitted andeler i <dataset>_ilr_regresjoner.xlsx.
+    # Input er profilark + Kontrol med ID, output er koeffisienttabeller/designmatriser og tilpassede andeler i <dataset>_ilr_regresjoner.xlsx.
     # ============================
     # STEG 10: ILR-regresjoner (robuste, HC3)
     # ============================
@@ -3290,7 +3290,7 @@ def run_all_steps():
                 out.append(d)
         return pd.concat(out, axis=1) if out else pd.DataFrame(index=df_cats.index)
 
-    # ---- 10.4: Bygg analyse-tabell (ID-merge) -----------------------------------
+    # ---- 10.4: Bygg analysetabell (ID-sammenslåing) -----------------------------------
     _S_id = _read_profiles_with_id("Strategi", xlsx_path, targets, ocai_cols, strat_cols)
     _O_id = _read_profiles_with_id("OCAI",    xlsx_path, targets, ocai_cols, strat_cols)
     _K_ctrl = _read_kontrol(xlsx_path)
@@ -3636,7 +3636,7 @@ def run_all_steps():
         s = out[have].sum(axis=1)
         out = out.loc[np.isfinite(s) & (np.abs(s - 1.0) <= 1e-6)].reset_index(drop=True)
 
-        # Aggreger per respondent (ID) med Aitchison-mean dersom mulig
+        # Aggreger per respondent (ID) med Aitchison-gjennomsnitt dersom mulig
         if "ID" in out.columns and not out.empty:
             out["ID"] = out["ID"].astype(str)
 
@@ -3702,7 +3702,7 @@ def run_all_steps():
                 return None, None
             mat = M[colsA + colsB].to_numpy()
         else:
-            # fallback (samme som før): kutt til min(nA, nB)
+            # hvis det ikke går: kutt til min(nA, nB) (samme som før)
             n = min(len(A), len(B))
             if n < 3:
                 return None, None
@@ -3869,8 +3869,8 @@ def run_all_steps():
     # ============================
     # Forutsetter fra STEG 10:
     #   - models_S, models_O (statsmodels OLS med cov_type="HC3")
-    #   - X_all (design for Strategy ~ OCAI + controls)
-    #   - X_rev (design for OCAI ~ Strategy + controls)
+    #   - X_all (design for Strategy ~ OCAI + kontroller)
+    #   - X_rev (design for OCAI ~ Strategy + kontroller)
     #   - base_path
     # Denne delen lager:
     #   (a) "Coef_tests_t_HC3" – t-tester per koeffisient (HC3)
@@ -3918,7 +3918,7 @@ def run_all_steps():
     _robust_fallback_counter = {"count": 0}
 
     def _get_robust_cov_with_fallback(m, prefer="HC3", fallback="HC1"):
-        # k can differ from len(X_cols) if the fitted model dropped/added params (e.g., collinearity/const handling)
+        # k kan avvike fra len(X_cols) hvis den tilpassede modellen fjernet/la til parametere (f.eks. kollinearitet/konstanthåndtering)
         try:
             k = int(np.asarray(getattr(m, "params", [])).shape[0])
         except Exception:
@@ -4087,7 +4087,7 @@ def run_all_steps():
             block   = 'S' if model_label.startswith("Strategy") else 'O'
             groups  = _build_index_groups(X_cols, block=block)
 
-            # All slopes (alle != const)
+            # Alle helninger (alle != const)
             all_idx = [i for i, c in enumerate(X_cols) if str(c) != "const"]
             if all_idx:
                 R_all = np.zeros((len(all_idx), p))
@@ -4102,7 +4102,7 @@ def run_all_steps():
                     F_all_Wv = np.nan
                     F_all_Wp = np.nan
                 else:
-                    # F-test (robust, bruker samme kovarians) med chi2-fallback
+                    # F-test (robust, bruker samme kovarians) med chi2 som nødløsning
                     try:
                         F_all = m.f_test(R_all, cov_p=cov)
                         F_all_fv = float(np.squeeze(F_all.fvalue))
@@ -4239,7 +4239,7 @@ def run_all_steps():
                     "robust_cov_used": cov_type_used,
                     "robust_cov_note": ("ok" if cov_stable else ";".join(cov_reasons) if cov_reasons else "HC3_invalid"),
                     "robust_cov_finite": bool(cov_stable),
-                    # nye model-level tillegg
+                    # nye tillegg på modellnivå
                     "F_all": F_all_fv,
                     "df1_all": F_all_d1,
                     "df2_all": F_all_d2,
@@ -4378,11 +4378,11 @@ def run_all_steps():
             "STEG12",
         )
 
-    # DEV-only smoke check for suspicious inference patterns
+    # røyketest kun i DEV for mistenkelige inferensmønstre
     if RUN_MODE == "DEV":
         def _smoke_check_inference(mdict, X_cols, label):
             for resp, m in sorted(mdict.items(), key=lambda kv: _order_by_resp_key(kv[0])):
-                # k can differ from len(X_cols) due to dropped/added params (e.g., collinearity or const handling)
+                # k kan avvike fra len(X_cols) på grunn av fjernede/tilføyde parametere (f.eks. kollinearitet eller konstanthåndtering)
                 try:
                     k = int(np.asarray(getattr(m, "params", [])).shape[0])
                 except Exception:
@@ -4451,13 +4451,13 @@ def run_all_steps():
     # Refitter modellene med kun ILR-prediktorer (uten kontroller) for å teste blokk-sammenheng.
     # Input er designene fra steg 10 og modellobjektene; output er <dataset>_ilr_beta_tests_NOCTRL.xlsx og konsollrapporter.
     # ============================
-    # STEG 12A: ILR-only (uten kontroller) — robust, bruker X_all/X_rev direkte
+    # STEG 12A: Kun ILR (uten kontroller) — robust, bruker X_all/X_rev direkte
     # ============================
     # Forutsetter fra STEG 10:
     #   - models_S: dict med OLS for ilrS_k ~ [ilrO_*, A..E, dummies, const]
     #   - models_O: dict med OLS for ilrO_k ~ [ilrS_*, A..E, dummies, const]
-    #   - X_all: design for Strategy ~ OCAI + controls (kolonner inkluderer ilrO_1..3)
-    #   - X_rev: design for OCAI ~ Strategy + controls (kolonner inkluderer ilrS_1..3)
+    #   - X_all: design for Strategy ~ OCAI + kontroller (kolonner inkluderer ilrO_1..3)
+    #   - X_rev: design for OCAI ~ Strategy + kontroller (kolonner inkluderer ilrS_1..3)
     #   - base_path
     # Lager:
     #   - eksempeldatasett_synthetic_mle_ilr_beta_tests_NOCTRL.xlsx
@@ -4474,7 +4474,7 @@ def run_all_steps():
         return (int(m.group(1)) if m else 0, str(k))
     
     def _ilr_cols_from_design(design_df, prefix):
-        # Strengt først: ^prefix\d+$ (ilrO_1 osv.); fallback: inneholder prefix
+        # Strengt først: ^prefix\d+$ (ilrO_1 osv.); hvis ikke: inneholder prefix
         strict = [c for c in design_df.columns if re.match(rf'^{re.escape(prefix)}\d+$', str(c))]
         if strict:
             return strict
@@ -4905,7 +4905,7 @@ def run_all_steps():
         tables, joints = [], []
     
         if okS_12:
-            # Strategy ~ OCAI + controls → ilrO_* er prediktorer → CLR for OCAI-profiler
+            # Strategy ~ OCAI + kontroller → ilrO_* er prediktorer → CLR for OCAI-profiler
             Xcols_S = list(X_all.columns)
             coef_S_CLR, wald_S_CLR = _clr_tables_for_models(
                 models_S, Xcols_S, ilr_prefix="ilrO_", psi=PSI_O_4x3,
@@ -4915,7 +4915,7 @@ def run_all_steps():
             tables.append(coef_S_CLR); joints.append(wald_S_CLR)
     
         if okO_12:
-            # OCAI ~ Strategy + controls → ilrS_* er prediktorer → CLR for Strategi-profiler
+            # OCAI ~ Strategy + kontroller → ilrS_* er prediktorer → CLR for Strategi-profiler
             Xcols_O = list(X_rev.columns)
             coef_O_CLR, wald_O_CLR = _clr_tables_for_models(
                 models_O, Xcols_O, ilr_prefix="ilrS_", psi=PSI_S_4x3,
@@ -4960,9 +4960,9 @@ def run_all_steps():
     
     
     # Validerer CLR-beregningene fra forrige steg med algebraiske sjekker og evt. bootstrap/delta-sammenligning.
-    # Input er modeller/Ψ/ILR→CLR-objekter, output er et sanity-check-Excel og konsollvarsler.
+    # Input er modeller/Ψ/ILR→CLR-objekter, output er kontrolltabell i Excel og kontrollvarsler.
     # ============================
-    # STEG 12C: Sanity checks for CLR-β og SE (ILR → CLR)
+    # STEG 12C: Rimelighetssjekker for CLR-β og SE (ILR → CLR)
     # ============================
     # Forutsetter fra STEG 10/12/12B:
     #   - _psi_pivot_isolate_first (Ψ, 4x3)
@@ -4973,12 +4973,12 @@ def run_all_steps():
     #   - base_path             : grunnsti for ut-filer
     #
     # Hensikt:
-    #   (A) Algebraiske invariants:
+    #   (A) Algebraiske invarianter:
     #       - ΨᵀΨ ≈ I
     #       - sum(β_clr) ≈ 0
     #       - Σ_clr har rad-/kolonnesummer ≈ 0
-    #       - round-trip: β_ilr ≈ Ψᵀ β_clr, Σ_ilr ≈ Ψᵀ Σ_clr Ψ
-    #   (B) Pairs bootstrap (B=200) for CLR-β:
+    #       - tur-retur: β_ilr ≈ Ψᵀ β_clr, Σ_ilr ≈ Ψᵀ Σ_clr Ψ
+    #   (B) Parvis bootstrap (B=200) for CLR-β:
     #       - sammenligner SE_clr (delta-metode) vs. SE_clr (bootstrap)
     #
     
@@ -4988,7 +4988,7 @@ def run_all_steps():
     if not (okS_12C or okO_12C):
         print("[STEG 12C] Mangler nødvendige objekter (models_*, Z_*, X_*). Hopper over konsistenskontroller.")
     else:
-        # ---------- 12C.1: Algebraiske invariants for Ψ og CLR-mapping ----------
+        # ---------- 12C.1: Algebraiske invarianter for Ψ og CLR-avbildning ----------
         PSI = _psi_pivot_isolate_first(first_idx=0)
         I_approx = PSI.T @ PSI
         I_err = np.linalg.norm(I_approx - np.eye(3), ord="fro")
@@ -5027,7 +5027,7 @@ def run_all_steps():
                 row_sums = np.sum(Sigma_clr, axis=1)
                 col_sums = np.sum(Sigma_clr, axis=0)
     
-                # Round-trip tilbake til ILR
+                # Tur-retur tilbake til ILR
                 beta_ilr_rt = psi.T @ beta_clr.reshape(-1, 1)
                 Sigma_ilr_rt = psi.T @ Sigma_clr @ psi
     
@@ -5064,7 +5064,7 @@ def run_all_steps():
         INV_DF = pd.DataFrame(inv_rows)
         INV_DF.insert(0, "Psi_Frobenius_norm_of_(PsiT_Psi-I3)", I_err)
     
-        # ---------- 12C.2: Pairs bootstrap for CLR-SE (B=200) ----------
+        # ---------- 12C.2: Parvis bootstrap for CLR-SE (B=200) ----------
         B_BOOT = 200
         rng = np.random.default_rng(12345)
         boot_rows = []
@@ -5459,7 +5459,7 @@ def run_all_steps():
             X[X <= 0] = eps
             X = X / X.sum(axis=1, keepdims=True)
         
-            # Aitchison-mean per ID via clr-mean
+            # Aitchison-gjennomsnitt per ID via clr-gjennomsnitt
             logX = np.log(X)
             clr  = logX - logX.mean(axis=1, keepdims=True)
             clr_df = pd.DataFrame(clr, columns=have)
@@ -5584,7 +5584,7 @@ def run_all_steps():
         print(f"[STEG 13] Skrev ILR-basert tverr-seksjons reliabilitet til: {out_rel_ilr13}")
         register_output(step="STEG 13", label="ilr_reliability_cross_section", path=out_rel_ilr13, kind="xlsx")
         
-        # ---------- 13.4: Tetra-geometri (egen navne-space for STEG 13) ----------
+        # ---------- 13.4: Tetra-geometri (eget navnerom for STEG 13) ----------
         def _tetra_vertices13():
             v1 = np.array([ 1.0,  0.0,  0.0])
             v2 = np.array([-1/3,  2*np.sqrt(2)/3,  0.0])
@@ -5844,7 +5844,7 @@ def run_all_steps():
         # Samler funksjoner for eksplisitte MANOVA-kall med sterk feilhåndtering/diagnostikk.
         # Forventet input er ILR-data + en faktorvariabel, og output er rapporttabeller som kan skrives til Excel.
         # ============================
-        # === STEG 14: MANOVA (explicit df, strong diagnostics + actual runs)
+        # === STEG 14: MANOVA (eksplisitt df, sterk diagnostikk + faktiske kjøringer)
         # ============================
 
         from typing import Dict, Optional, Union
@@ -5902,8 +5902,8 @@ def run_all_steps():
             with pd.ExcelWriter(outpath, engine="xlsxwriter") as xw:
                 for term_tag, tbls in mv_tables.items():
                     for name, df in tbls.items():
-                        # Add labeling columns to make tables self-explanatory.
-                        # term_tag is expected like "OCAI_Departement_C(Departement)" from _merge_mv_tables14.
+                        # Legg til merkekolonner slik at tabellene blir selvforklarende.
+                        # term_tag forventes å ligne på "OCAI_Departement_C(Departement)" fra _merge_mv_tables14.
                         if meta and term_tag in meta:
                             block = meta[term_tag].get("block", "")
                             factor = meta[term_tag].get("factor", "")
@@ -5921,9 +5921,9 @@ def run_all_steps():
                         df_out.insert(0, "factor", factor)
                         df_out.insert(0, "block", block)
                         if skip_tests_suffix and name == "Tests":
-                            sheet = f"{term_tag}".replace("/", "_")[:31]  # Excel limit 31
+                            sheet = f"{term_tag}".replace("/", "_")[:31]  # Excel-grense 31
                         else:
-                            sheet = f"{term_tag}_{name}".replace("/", "_")[:31]  # Excel limit 31
+                            sheet = f"{term_tag}_{name}".replace("/", "_")[:31]  # Excel-grense 31
                         export_excel(df_out, writer=xw, sheet_name=sheet, label=sheet)
 
         def _manova_block_by_factor14(
@@ -5965,11 +5965,11 @@ def run_all_steps():
             if not _HAS_MANOVA_14:
                 raise RuntimeError("[STEG 14] MANOVA ikke tilgjengelig (statsmodels).")
 
-            # Determine expected ILR column names from block initial
+            # Finn forventede ILR-kolonnenavn fra blokkens initial
             init = block_name[0]  # 'O' or 'S'
             ycols = [f'ilr{init}_1', f'ilr{init}_2', f'ilr{init}_3']
 
-            # 1) Validate presence
+            # 1) Valider tilstedeværelse
             required = [factor_col] + ycols
             missing = [c for c in required if c not in df.columns]
             if missing:
@@ -5981,10 +5981,10 @@ def run_all_steps():
                     f"- Available (first 20): {available_sample}"
                 )
 
-            # 2) Coerce dtypes (critical for 'string[python]' TypeError)
+            # 2) Tving datatyper (kritisk for 'string[python]'-TypeError)
             df_work = _coerce_for_patsy(df, [factor_col], ycols)
 
-            # 3) Drop rows with NA in factor or any response
+            # 3) Dropp rader med NA i faktor eller i noen respons
             before_n = len(df_work)
             df_work = df_work.dropna(subset=[factor_col] + ycols)
             after_n = len(df_work)
@@ -5999,7 +5999,7 @@ def run_all_steps():
                     f"Tip: ensure ILR columns are numeric (float) and '{factor_col}' has no missing values."
                 )
 
-            # 3b) Filter factor levels with too few obs
+            # 3b) Filtrer faktornivåer med for få observasjoner
             counts = df_work[factor_col].value_counts()
             keep_levels = counts.index[counts >= min_per_level]
             df_work = df_work[df_work[factor_col].isin(keep_levels)].copy()
@@ -6016,15 +6016,15 @@ def run_all_steps():
                     f"Tip: For numeric-like vars (e.g., Alder), consider binning before MANOVA if needed."
                 )
 
-            # 4) Build formula and fit
+            # 4) Bygg formel og tilpass
             formula = f"{' + '.join(ycols)} ~ C({factor_col})"
             ma = MANOVA.from_formula(formula, data=df_work)
             mv_res = ma.mv_test()
 
-            # 5) Collect outputs
+            # 5) Samle utdata
             mv_tables = _extract_mv_tables(mv_res)
 
-            # 6) Write Excel (optional)
+            # 6) Skriv Excel (valgfritt)
             _write_mv_to_excel(mv_tables, outfile)
 
             return {
@@ -6190,7 +6190,7 @@ def run_all_steps():
             _RUN_META_LIKERT = []
             _LIKERT_META = {}
 
-            # Load Kontroll + Bakgrunn directly (ID + bg vars + Likert cols)
+            # Last Kontroll + Bakgrunn direkte (ID + bg-variabler + Likert-kolonner)
             _likert_df14 = pd.DataFrame()
             _likert_cols14 = []
             _likert_bg_cols14 = []
@@ -6295,7 +6295,7 @@ def run_all_steps():
                     ma = MANOVA.from_formula(formula, data=df_work)
                     mv_res = ma.mv_test()
                     mv_tables = _extract_mv_tables(mv_res)
-                    # keep only Intercept + C(factor) terms if present
+                    # behold bare Intercept + C(factor)-ledd hvis de finnes
                     keep_terms = {}
                     want_term = f"C(Q(\"{factor}\"))"
                     for term_key in mv_tables.keys():
@@ -6331,7 +6331,7 @@ def run_all_steps():
             if _ALL_MV_TABLES_LIKERT:
                 _write_mv_to_excel(_ALL_MV_TABLES_LIKERT, _out_likert_manova14, meta=_LIKERT_META, skip_tests_suffix=True)
             else:
-                # still create workbook with RUN_META only
+                # opprett fortsatt arbeidsbok med bare RUN_META
                 with pd.ExcelWriter(_out_likert_manova14, engine="xlsxwriter") as xw:
                     meta = pd.DataFrame(_RUN_META_LIKERT)
                     export_excel(meta, writer=xw, sheet_name="RUN_META", label="RUN_META")
@@ -6461,7 +6461,7 @@ def run_all_steps():
     _ilr_S_15 = _build_ilr_with_id15("Strategi", strat_cols)
     _ctrl_15  = _numeric_controls_df15()
     
-    # Flett sammen på ID (inner join for parvis sammenlignbarhet)
+    # Flett sammen på ID (indre sammenføying for parvis sammenlignbarhet)
     frames_15 = [df for df in [_ilr_S_15, _ilr_O_15, _ctrl_15] if not df.empty]
     if len(frames_15) >= 2:
         M_15 = frames_15[0]
@@ -6647,8 +6647,8 @@ def run_all_steps():
     
     # ---------- Overlays på reelle data / Dirichlet (bruker STEG 8-hjelpere) ----------
     def _overlay_observed_and_dirichlet16(ax, block, sheet, point_size=10, sim_mult=2, seed=123):
-        X = _empirical_matrix_for_sheet(sheet, block)   # observed P (n,4)
-        a, _S = _alpha_for_sheet(DIR_RES, block, sheet) # fitted alpha (4,)
+        X = _empirical_matrix_for_sheet(sheet, block)   # observert P (n,4)
+        a, _S = _alpha_for_sheet(DIR_RES, block, sheet) # tilpasset alpha (4,)
         if X is None or a is None:
             return False, None
         xyz_emp = _bary_to_xyz16(X)
@@ -6685,7 +6685,7 @@ def run_all_steps():
         out_dir = Path(out_dir); out_dir.mkdir(parents=True, exist_ok=True)
         rng = np.random.default_rng(42)
         A = np.array(alpha, dtype=float)
-        P = rng.dirichlet(A, size=N)             # synthetic compositions
+        P = rng.dirichlet(A, size=N)             # syntetiske komposisjoner
         Z = _pivot_ilr_forward16(P)              # ILR-koordinater
         xyz = _bary_to_xyz16(P)                  # tetra-koordinater
     
@@ -6731,7 +6731,7 @@ def run_all_steps():
         print(f"[STEG 16B] Lagret: {out}")
         register_output(step="STEG 16B", label="result_fig", path=out, kind="png")
     
-    # ---------- (C) Real-data fargelagt etter ILR (z1/z2/z3) ----------
+    # ---------- (C) Virkelige data fargelagt etter ILR (z1/z2/z3) ----------
     def _results_tetra_color_by_z16(block, sheet, labels, out_dir, color_by="z1", add_dirichlet_faint=False):
         out_dir = Path(out_dir); out_dir.mkdir(parents=True, exist_ok=True)
         X = _empirical_matrix_for_sheet(sheet, block)   # (n,4), sum≈1
@@ -6811,7 +6811,7 @@ def run_all_steps():
     else:
         print("[STEG 16B] Hoppet over resultatsfigurer: DIR_RES mangler/er tom.")
     
-    # (C) Real-data fargelagt etter z1/z2/z3 (ingen Dirichlet-overlay som default)
+    # (C) Virkelige data fargelagt etter z1/z2/z3 (ingen Dirichlet-overlay som standard)
     for block, sheet, labels in [
         ("OCAI",      "MERGET_OCAI",      ocai_cols),
         ("Strategi",  "MERGET_STRATEGI",  strat_cols),
@@ -6940,9 +6940,9 @@ def run_all_steps():
         print("[STEG 17] Fant ingen artefakter å rapportere (ingen av forventede filer/mapper eksisterer).")
     
     # Sammenligner ilr-formelen direkte mot Ψ-matrisen for å sjekke numerisk samsvar på syntetiske data.
-    # Input er genererte P/Ψ fra skriptet, output er en sanity-tabell skrevet til Excel + konsollvarsling.
+    # Input er genererte P/Ψ fra skriptet, output er en rimelighetstabell skrevet til Excel + konsollvarsling.
     # ===========================
-    # STEG 18: ILR-sanity check (FORMEL vs. Ψ-matrise)
+    # STEG 18: ILR-rimelighetssjekk (FORMEL vs. Ψ-matrise)
     # ===========================
     # - For hvert ark (OCAI/Strategi) og for MERGET_*:
     #   * bygger P (0..1, sum≈1, >0)
@@ -6959,7 +6959,7 @@ def run_all_steps():
         [-1/np.sqrt(12), -1/np.sqrt(6),       -1/np.sqrt(2)           ],
     ])
     
-    # Sanity: Ψ must be orthonormal (catches accidental edits)
+    # Rimelighetssjekk: Ψ må være ortonormal (fanger utilsiktede endringer)
     assert np.allclose(_PSI_SANITY.T @ _PSI_SANITY, np.eye(3)), "Ψ is not orthonormal"
     
     def _clean_P_matrix(df: pd.DataFrame, cols, tol=1e-6, eps=1e-12):
